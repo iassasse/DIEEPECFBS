@@ -194,7 +194,7 @@ const Layout = () => {
             <span className="text-base font-bold text-slate-800 tracking-tight">
               DIEEPEC<span className="text-blue-600">FBS</span>
             </span>
-            <p className="text-xs text-slate-400 leading-none">Gestion de Stock</p>
+            <p className="text-xs text-slate-400 leading-none">Gestion d'Inventaire</p>
           </div>
         </div>
 

@@ -76,7 +76,7 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, Shoul
             'Nom',
             'Description',
             'Catégorie',
-            'Prix unitaire (FCFA)',
+            'Prix unitaire (DH)',
             'Quantité en stock',
             'Seuil d\'alerte',
             'Code-barres',

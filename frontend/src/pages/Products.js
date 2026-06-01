@@ -67,7 +67,7 @@ const ProductForm = ({ product, categories, onSubmit, loading }) => {
         <FormField label="Fournisseur" error={errors.supplier}>
           <Input value={form.supplier} onChange={e => set('supplier', e.target.value)} placeholder="Ex: HP Maroc" />
         </FormField>
-        <FormField label="Prix unitaire (FCFA)" required error={errors.price}>
+        <FormField label="Prix unitaire (DH)" required error={errors.price}>
           <Input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="0" />
         </FormField>
         <FormField label="Quantité initiale" required error={errors.quantity}>
@@ -332,12 +332,21 @@ const Products = () => {
   const [loading, setLoading]     = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [page, setPage]           = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const [search, setSearch]       = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [stockFilter, setStockFilter] = useState('');
   const [modal, setModal]         = useState(null); // null | 'create' | 'edit'
   const [editing, setEditing]     = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Debounce search input to avoid hitting the API on every keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const load = useCallback(() => { // eslint-disable-line react-hooks/exhaustive-deps
     setLoading(true);
@@ -452,8 +461,8 @@ const Products = () => {
             <Input
               className="pl-10"
               placeholder="Rechercher par nom, code-barres, fournisseur..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex gap-2">
@@ -525,7 +534,7 @@ const Products = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-slate-800 text-sm">
-                      {Number(p.price).toLocaleString('fr-FR')} <span className="text-xs font-normal text-slate-400">FCFA</span>
+                      {Number(p.price).toLocaleString('fr-FR')} <span className="text-xs font-normal text-slate-400">DH</span>
                     </p>
                   </div>
                 </div>

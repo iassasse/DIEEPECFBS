@@ -51,10 +51,19 @@ const Categories = () => {
   const [loading, setLoading]       = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [page, setPage]             = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const [search, setSearch]         = useState('');
   const [modal, setModal]           = useState(null);
   const [editing, setEditing]       = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Debounce search input to avoid hitting the API on every keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -122,7 +131,7 @@ const Categories = () => {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
         <div className="relative max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <Input className="pl-10" placeholder="Rechercher une catégorie..." value={search} onChange={e => setSearch(e.target.value)} />
+          <Input className="pl-10" placeholder="Rechercher une catégorie..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
       </div>
 

@@ -126,7 +126,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'type' => 'entry',
                     'quantity' => $qty,
                     'reference' => 'ENT-' . strtoupper(substr(md5(rand()), 0, 6)),
-                    'notes' => 'Entrée initiale de stock',
+                    'notes' => "Entrée initiale d'inventaire",
                     'created_at' => now()->subDays(rand(1, 30)),
                     'updated_at' => now()->subDays(rand(1, 30)),
                 ]);
@@ -140,7 +140,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'type' => 'exit',
                     'quantity' => $qty,
                     'reference' => 'SOR-' . strtoupper(substr(md5(rand()), 0, 6)),
-                    'notes' => 'Sortie de stock',
+                    'notes' => "Sortie d'inventaire",
                     'created_at' => now()->subDays(rand(1, 15)),
                     'updated_at' => now()->subDays(rand(1, 15)),
                 ]);

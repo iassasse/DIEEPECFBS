@@ -129,9 +129,9 @@ const Reports = () => {
     }
   };
 
-  // Format currency helper (FCFA)
+  // Format currency helper (DH)
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR').format(val) + ' DH';
   };
 
   return (
@@ -180,7 +180,7 @@ const Reports = () => {
           { 
             id: 'movements', 
             icon: TrendingUp, 
-            title: 'Mouvements de Stock', 
+            title: "Mouvements d'Inventaire", 
             desc: 'Historique filtrable des entrées et des sorties.',
             color: 'border-emerald-500 text-emerald-600 bg-emerald-50/50',
             inactiveColor: 'text-slate-400 bg-slate-50 border-slate-100 hover:border-slate-300'
@@ -188,7 +188,7 @@ const Reports = () => {
           { 
             id: 'valuation', 
             icon: FileText, 
-            title: 'Valorisation des Stocks', 
+            title: "Valorisation de l'Inventaire", 
             desc: 'Analyse financière détaillée et valeur marchande par fournisseur.',
             color: 'border-purple-500 text-purple-600 bg-purple-50/50',
             inactiveColor: 'text-slate-400 bg-slate-50 border-slate-100 hover:border-slate-300'

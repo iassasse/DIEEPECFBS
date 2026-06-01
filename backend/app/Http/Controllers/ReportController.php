@@ -71,8 +71,8 @@ class ReportController extends Controller
                 'Code-barres',
                 'Catégorie',
                 'Quantité en stock',
-                'Prix unitaire (FCFA)',
-                'Valeur du stock (FCFA)',
+                'Prix unitaire (DH)',
+                'Valeur du stock (DH)',
                 'Seuil d\'alerte',
                 'Statut'
             ];
@@ -126,8 +126,8 @@ class ReportController extends Controller
                 'Catégorie',
                 'Fournisseur',
                 'Quantité en stock',
-                'Prix unitaire (FCFA)',
-                'Valeur totale (FCFA)'
+                'Prix unitaire (DH)',
+                'Valeur totale (DH)'
             ];
             foreach ($items as $item) {
                 $data[] = [

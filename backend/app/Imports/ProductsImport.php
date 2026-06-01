@@ -74,7 +74,7 @@ class ProductsImport implements ToCollection, WithHeadingRow
                 ], [
                     'name'            => 'required|string|max:255',
                     'description'     => 'nullable|string|max:2000',
-                    'category'        => 'required|string|max:255',
+                    'category'        => 'required|string|max:255|exists:categories,name',
                     'price'           => 'required|numeric|min:0',
                     'quantity'        => 'required|integer|min:0',
                     'alert_threshold' => 'required|integer|min:0',
@@ -83,6 +83,7 @@ class ProductsImport implements ToCollection, WithHeadingRow
                 ], [
                     'name.required'            => "Le nom du produit est requis.",
                     'category.required'        => "La catégorie est requise.",
+                    'category.exists'          => "La catégorie \":value\" n'existe pas. Veuillez la créer d'abord.",
                     'price.required'           => "Le prix est requis.",
                     'price.numeric'            => "Le prix doit être un nombre.",
                     'price.min'                => "Le prix doit être supérieur ou égal à 0.",
@@ -102,11 +103,8 @@ class ProductsImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
-                // Trouver ou créer la catégorie
-                $category = Category::firstOrCreate(
-                    ['name' => $categoryName ?: 'Général'],
-                    ['description' => 'Créée automatiquement via import Excel.']
-                );
+                // Trouver la catégorie (qui existe forcément grâce à la validation exists)
+                $category = Category::where('name', $categoryName ?: 'Général')->first();
 
                 // Recherche doublon par code-barres ou par nom
                 $product = null;
@@ -200,7 +198,7 @@ class ProductsImport implements ToCollection, WithHeadingRow
                 $map['description'] = $key;
             } elseif (in_array($normalized, ['categorie', 'category', 'cat'])) {
                 $map['category'] = $key;
-            } elseif (in_array($normalized, ['prix', 'price', 'prixunitaire', 'prixunitairefcfa'])) {
+            } elseif (in_array($normalized, ['prix', 'price', 'prixunitaire', 'prixunitairefcfa', 'prixunitairedh'])) {
                 $map['price'] = $key;
             } elseif (in_array($normalized, ['quantite', 'quantity', 'qty', 'quantiteenstock'])) {
                 $map['quantity'] = $key;

@@ -48,7 +48,7 @@ const Login = () => {
             <h1 className="text-2xl font-bold text-white tracking-tight">
               DIEEPEC <span className="text-blue-400">FBS</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Système de Gestion de Stock</p>
+            <p className="text-slate-400 text-sm mt-1">Application de Gestion d'Inventaire</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -133,7 +133,7 @@ const Login = () => {
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-6">
-          © {new Date().getFullYear()} DIEEPEC FBS — Gestion de Stock
+          © {new Date().getFullYear()} Application de Gestion d'Inventaire (DIEEPEC FBS)
         </p>
       </div>
     </div>

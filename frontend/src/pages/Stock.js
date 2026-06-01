@@ -104,6 +104,7 @@ const Stock = () => {
   const [loading, setLoading]     = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [page, setPage]           = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const [search, setSearch]       = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [dateFrom, setDateFrom]   = useState('');
@@ -111,6 +112,14 @@ const Stock = () => {
   const [showExport, setShowExport] = useState(false);
   const [showModal, setShowModal]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Debounce search input to avoid hitting the API on every keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const load = useCallback(() => { // eslint-disable-line react-hooks/exhaustive-deps
     setLoading(true);
@@ -180,7 +189,7 @@ const Stock = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Mouvements de Stock</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Mouvements d'Inventaire</h1>
           <p className="text-slate-500 text-sm mt-0.5">{meta?.total ?? '—'} opérations enregistrées</p>
         </div>
         <div className="flex items-center gap-2">
@@ -223,7 +232,7 @@ const Stock = () => {
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <Input className="pl-10" placeholder="Rechercher par produit ou référence..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Input className="pl-10" placeholder="Rechercher par produit ou référence..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             <Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-40">
@@ -268,7 +277,7 @@ const Stock = () => {
           <EmptyState
             icon={SlidersHorizontal}
             title="Aucun mouvement"
-            description={search || typeFilter ? "Essayez de modifier vos filtres." : "Commencez par enregistrer un mouvement de stock."}
+            description={search || typeFilter ? "Essayez de modifier vos filtres." : "Commencez par enregistrer un mouvement d'inventaire."}
             action={!search && !typeFilter && (
               <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm">
                 <Plus className="w-4 h-4" /> Ajouter un mouvement
@@ -324,7 +333,7 @@ const Stock = () => {
 
       <Pagination meta={meta} onPageChange={setPage} />
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nouveau Mouvement de Stock">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nouveau Mouvement d'Inventaire">
         <MovementForm products={products} onSubmit={handleCreate} loading={formLoading} />
       </Modal>
 

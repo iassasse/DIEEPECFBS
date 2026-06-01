@@ -25,9 +25,26 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->has('name')) {
+            $request->merge(['name' => trim($request->name)]);
+        }
+
         $validated = $request->validate([
-            'name'        => 'required|string|max:255|unique:categories,name',
+            'name'        => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (Category::whereRaw('LOWER(name) = ?', [strtolower($value)])->exists()) {
+                        $fail('La catégorie existe déjà.');
+                    }
+                }
+            ],
             'description' => 'nullable|string|max:1000',
+        ], [
+            'name.required' => 'Le nom est requis.',
+            'name.string'   => 'Le nom doit être une chaîne de caractères.',
+            'name.max'      => 'Le nom ne doit pas dépasser 255 caractères.',
         ]);
 
         $category = Category::create($validated);
@@ -43,9 +60,26 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        if ($request->has('name')) {
+            $request->merge(['name' => trim($request->name)]);
+        }
+
         $validated = $request->validate([
-            'name'        => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($category->id)],
+            'name'        => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($category) {
+                    if (Category::whereRaw('LOWER(name) = ?', [strtolower($value)])->where('id', '!=', $category->id)->exists()) {
+                        $fail('La catégorie existe déjà.');
+                    }
+                }
+            ],
             'description' => 'nullable|string|max:1000',
+        ], [
+            'name.required' => 'Le nom est requis.',
+            'name.string'   => 'Le nom doit être une chaîne de caractères.',
+            'name.max'      => 'Le nom ne doit pas dépasser 255 caractères.',
         ]);
 
         $category->update($validated);

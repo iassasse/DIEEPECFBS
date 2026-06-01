@@ -18,6 +18,7 @@ class DashboardController extends Controller
         $thisMonth = Carbon::now()->startOfMonth();
         $lastMonth = Carbon::now()->subMonth()->startOfMonth();
         $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth();
+        $startMonth = Carbon::now()->subMonths(5)->startOfMonth();
 
         // --- Key Stats ---
         $totalProducts    = Product::count();
@@ -25,15 +26,26 @@ class DashboardController extends Controller
         $lowStockCount    = Product::whereRaw('quantity <= alert_threshold AND quantity > 0')->count();
         $outOfStockCount  = Product::where('quantity', 0)->count();
 
-        $entriesThisMonth = StockMovement::where('type', 'entry')
-            ->whereDate('created_at', '>=', $thisMonth)->sum('quantity');
-        $exitsThisMonth   = StockMovement::where('type', 'exit')
-            ->whereDate('created_at', '>=', $thisMonth)->sum('quantity');
+        // Load all movements for the last 6 months in one query to run aggregates in memory
+        $recentMovementsForStats = StockMovement::where('created_at', '>=', $startMonth)->get();
 
-        $entriesLastMonth = StockMovement::where('type', 'entry')
-            ->whereBetween('created_at', [$lastMonth, $lastMonthEnd])->sum('quantity');
-        $exitsLastMonth   = StockMovement::where('type', 'exit')
-            ->whereBetween('created_at', [$lastMonth, $lastMonthEnd])->sum('quantity');
+        $entriesThisMonth = $recentMovementsForStats
+            ->where('type', 'entry')
+            ->where('created_at', '>=', $thisMonth)
+            ->sum('quantity');
+        $exitsThisMonth   = $recentMovementsForStats
+            ->where('type', 'exit')
+            ->where('created_at', '>=', $thisMonth)
+            ->sum('quantity');
+
+        $entriesLastMonth = $recentMovementsForStats
+            ->where('type', 'entry')
+            ->whereBetween('created_at', [$lastMonth, $lastMonthEnd])
+            ->sum('quantity');
+        $exitsLastMonth   = $recentMovementsForStats
+            ->where('type', 'exit')
+            ->whereBetween('created_at', [$lastMonth, $lastMonthEnd])
+            ->sum('quantity');
 
         // Total stock value
         $totalStockValue = Product::selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
@@ -41,12 +53,22 @@ class DashboardController extends Controller
         // --- Chart Data: Last 7 days movements ---
         $chartData = [];
         $dayNames  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        
+        $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
+        $movementsByDay = $recentMovementsForStats
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->groupBy(function ($m) {
+                return $m->created_at->format('Y-m-d');
+            });
+
         for ($i = 6; $i >= 0; $i--) {
             $day  = Carbon::now()->subDays($i);
-            $entries = StockMovement::where('type', 'entry')
-                ->whereDate('created_at', $day)->sum('quantity');
-            $exits = StockMovement::where('type', 'exit')
-                ->whereDate('created_at', $day)->sum('quantity');
+            $dayStr = $day->format('Y-m-d');
+            $dayMovements = $movementsByDay->get($dayStr, collect());
+            
+            $entries = $dayMovements->where('type', 'entry')->sum('quantity');
+            $exits   = $dayMovements->where('type', 'exit')->sum('quantity');
+            
             $chartData[] = [
                 'name'    => $dayNames[$day->dayOfWeek],
                 'entrees' => (int)$entries,
@@ -57,16 +79,19 @@ class DashboardController extends Controller
         // --- Monthly Chart: Last 6 months ---
         $monthlyData = [];
         $monthNames  = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        
+        $movementsByMonth = $recentMovementsForStats->groupBy(function ($m) {
+            return $m->created_at->format('Y-m');
+        });
+
         for ($i = 5; $i >= 0; $i--) {
             $month  = Carbon::now()->subMonths($i);
-            $entries = StockMovement::where('type', 'entry')
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->sum('quantity');
-            $exits = StockMovement::where('type', 'exit')
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->sum('quantity');
+            $monthStr = $month->format('Y-m');
+            $monthMovements = $movementsByMonth->get($monthStr, collect());
+            
+            $entries = $monthMovements->where('type', 'entry')->sum('quantity');
+            $exits   = $monthMovements->where('type', 'exit')->sum('quantity');
+            
             $monthlyData[] = [
                 'name'    => $monthNames[$month->month - 1],
                 'entrees' => (int)$entries,

@@ -146,16 +146,16 @@
             <tr>
                 <td style="vertical-align: top;">
                     <div class="logo-text">DIEEPEC FBS</div>
-                    <div class="logo-sub">Système de Gestion des Stocks & Inventaire</div>
+                    <div class="logo-sub">Application de Gestion d'Inventaire (DIEEPEC FBS)</div>
                 </td>
                 <td style="vertical-align: top; text-align: right;">
                     <div class="report-title">
                         @if($type === 'stock')
                             RAPPORT D'INVENTAIRE GLOBAL
                         @elseif($type === 'movements')
-                            RAPPORT DES MOUVEMENTS DE STOCK
+                            RAPPORT DES MOUVEMENTS D'INVENTAIRE
                         @elseif($type === 'valuation')
-                            RAPPORT DE VALORISATION DES STOCKS
+                            RAPPORT DE VALORISATION DE L'INVENTAIRE
                         @endif
                     </div>
                     <div class="report-date">Généré le : {{ date('d/m/Y H:i') }}</div>
@@ -177,7 +177,7 @@
                 <td style="width: 35%; padding-right: 8px; padding-left: 8px;">
                     <div class="summary-card">
                         <div class="summary-card-title">Valeur Totale Stock</div>
-                        <div class="summary-card-value">{{ number_format($stats['total_stock_value'], 0, ',', ' ') }} FCFA</div>
+                        <div class="summary-card-value">{{ number_format($stats['total_stock_value'], 0, ',', ' ') }} DH</div>
                     </div>
                 </td>
                 <td style="width: 20%; padding-right: 8px; padding-left: 8px;">
@@ -227,7 +227,7 @@
                 <td style="width: 30%; padding-right: 8px; padding-left: 8px;">
                     <div class="summary-card">
                         <div class="summary-card-title">Valorisation Totale</div>
-                        <div class="summary-card-value" style="color: #8B5CF6;">{{ number_format($stats['total_valuation'], 0, ',', ' ') }} FCFA</div>
+                        <div class="summary-card-value" style="color: #8B5CF6;">{{ number_format($stats['total_valuation'], 0, ',', ' ') }} DH</div>
                     </div>
                 </td>
                 <td style="width: 20%; padding-left: 8px;">
@@ -249,8 +249,8 @@
                     <th style="width: 15%;">Code-barres</th>
                     <th style="width: 15%;">Catégorie</th>
                     <th style="width: 10%; text-align: right;">Qté</th>
-                    <th style="width: 12%; text-align: right;">P.U. (FCFA)</th>
-                    <th style="width: 13%; text-align: right;">Valeur (FCFA)</th>
+                    <th style="width: 12%; text-align: right;">P.U. (DH)</th>
+                    <th style="width: 13%; text-align: right;">Valeur (DH)</th>
                     <th style="width: 10%; text-align: center;">Statut</th>
                 </tr>
             @elseif($type === 'movements')
@@ -271,8 +271,8 @@
                     <th style="width: 15%;">Catégorie</th>
                     <th style="width: 15%;">Fournisseur</th>
                     <th style="width: 8%; text-align: right;">Qté</th>
-                    <th style="width: 12%; text-align: right;">P.U. (FCFA)</th>
-                    <th style="width: 15%; text-align: right;">Valeur Totale</th>
+                    <th style="width: 12%; text-align: right;">P.U. (DH)</th>
+                    <th style="width: 15%; text-align: right;">Valeur Totale (DH)</th>
                 </tr>
             @endif
         </thead>
@@ -324,7 +324,7 @@
                         <td>{{ $item['supplier'] }}</td>
                         <td class="text-right font-bold">{{ $item['quantity'] }}</td>
                         <td class="text-right">{{ number_format($item['price'], 0, ',', ' ') }}</td>
-                        <td class="text-right font-bold" style="color: #6D28D9;">{{ number_format($item['stock_value'], 0, ',', ' ') }} FCFA</td>
+                        <td class="text-right font-bold" style="color: #6D28D9;">{{ number_format($item['stock_value'], 0, ',', ' ') }} DH</td>
                     </tr>
                 @endif
             @empty
@@ -342,7 +342,7 @@
                         <td colspan="3">TOTAL</td>
                         <td class="text-right"></td>
                         <td></td>
-                        <td class="text-right">{{ number_format($stats['total_stock_value'], 0, ',', ' ') }} FCFA</td>
+                        <td class="text-right">{{ number_format($stats['total_stock_value'], 0, ',', ' ') }} DH</td>
                         <td></td>
                     </tr>
                 @elseif($type === 'movements')
@@ -359,7 +359,7 @@
                         <td colspan="4">TOTAL</td>
                         <td class="text-right">{{ $stats['total_items_count'] }}</td>
                         <td></td>
-                        <td class="text-right" style="color: #6D28D9;">{{ number_format($stats['total_valuation'], 0, ',', ' ') }} FCFA</td>
+                        <td class="text-right" style="color: #6D28D9;">{{ number_format($stats['total_valuation'], 0, ',', ' ') }} DH</td>
                     </tr>
                 @endif
             @endif

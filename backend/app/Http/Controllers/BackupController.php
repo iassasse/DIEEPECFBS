@@ -195,7 +195,7 @@ class BackupController extends Controller
             $tables[] = $row->$keyName;
         }
         
-        $sql = "-- DIEEPEC FBS Database Backup\n";
+        $sql = "-- Application de Gestion d'Inventaire (DIEEPEC FBS) Database Backup\n";
         $sql .= "-- Date: " . date('Y-m-d H:i:s') . "\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
         
