@@ -29,14 +29,16 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, Shoul
         if ($this->isTemplate) {
             return collect([
                 (object)[
-                    'name' => 'Ex: Ordinateur Portable HP 15',
-                    'description' => 'Intel Core i5, 8GB RAM, 256GB SSD',
-                    'category_name' => 'Informatique',
-                    'price' => 350000,
-                    'quantity' => 15,
-                    'alert_threshold' => 5,
-                    'barcode' => 'HP-LP-150',
-                    'supplier' => 'HP Distribution',
+                    'inventory_number'   => '136',
+                    'category_name'      => 'Travaux d\'aménagement et d\'installation',
+                    'quantity'           => 1,
+                    'designation'        => 'Climatiseur split système mural 9000 BTU reversible type inverter DAIKO ACW09QINV410XK',
+                    'location'           => 'DPIEPEECFBS',
+                    'brand'              => 'DAIKO',
+                    'serial_number'      => '25278886876',
+                    'user_service'       => 'BUREAU 2',
+                    'purchase_reference' => 'BC01/2024',
+                    'price'              => 4000.00,
                 ]
             ]);
         }
@@ -46,8 +48,13 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, Shoul
         if (!empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%")
+                $q->where('designation', 'like', "%{$search}%")
+                  ->orWhere('inventory_number', 'like', "%{$search}%")
+                  ->orWhere('brand', 'like', "%{$search}%")
+                  ->orWhere('serial_number', 'like', "%{$search}%")
+                  ->orWhere('user_service', 'like', "%{$search}%")
+                  ->orWhere('purchase_reference', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
                   ->orWhere('supplier', 'like', "%{$search}%");
             });
         }
@@ -67,48 +74,38 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, Shoul
             }
         }
 
-        return $query->orderBy('name')->get();
+        return $query->orderBy('designation')->get();
     }
 
     public function headings(): array
     {
         return [
-            'Nom',
-            'Description',
-            'Catégorie',
-            'Prix unitaire (DH)',
-            'Quantité en stock',
-            'Seuil d\'alerte',
-            'Code-barres',
-            'Fournisseur',
+            '  N°  d\'inv DPIEPEECFBS',
+            'Famille',
+            'Quantité',
+            'Désignation',
+            'Localisation',
+            'Marque',
+            'N°de série ',
+            'Service utilisateur',
+            'Référence d\'achat',
+            'Prix d\'acquisition HT unitaire',
         ];
     }
 
     public function map($product): array
     {
-        // If it's a template mock object
-        if ($this->isTemplate) {
-            return [
-                $product->name,
-                $product->description,
-                $product->category_name,
-                $product->price,
-                $product->quantity,
-                $product->alert_threshold,
-                $product->barcode,
-                $product->supplier,
-            ];
-        }
-
         return [
-            $product->name,
-            $product->description,
-            $product->category?->name ?? 'Général',
-            $product->price,
+            $product->inventory_number,
+            $product->isTemplate ? $product->category_name : ($product->category?->name ?? 'Général'),
             $product->quantity,
-            $product->alert_threshold,
-            $product->barcode,
-            $product->supplier,
+            $product->designation,
+            $product->location,
+            $product->brand,
+            $product->serial_number,
+            $product->user_service,
+            $product->purchase_reference,
+            $product->price,
         ];
     }
 

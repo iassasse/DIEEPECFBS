@@ -21,12 +21,28 @@ const stockBadge = (product) => {
 };
 
 const FORM_DEFAULTS = {
-  name: '', description: '', category_id: '', quantity: 0,
-  price: '', barcode: '', supplier: '', alert_threshold: 10
+  designation: '', description: '', category_id: '', quantity: 0,
+  price: '', inventory_number: '', location: 'DPIEPEECFBS', brand: '',
+  serial_number: '', user_service: '', purchase_reference: '',
+  supplier: '', alert_threshold: 0
 };
 
 const ProductForm = ({ product, categories, onSubmit, loading }) => {
-  const [form, setForm]     = useState(product || FORM_DEFAULTS);
+  const [form, setForm]     = useState(product ? {
+    designation: product.designation || '',
+    description: product.description || '',
+    category_id: product.category_id || '',
+    quantity: product.quantity || 0,
+    price: product.price || '',
+    inventory_number: product.inventory_number || '',
+    supplier: product.supplier || '',
+    alert_threshold: product.alert_threshold || 0,
+    location: product.location || 'DPIEPEECFBS',
+    brand: product.brand || '',
+    serial_number: product.serial_number || '',
+    user_service: product.user_service || '',
+    purchase_reference: product.purchase_reference || ''
+  } : FORM_DEFAULTS);
   const [errors, setErrors] = useState({});
 
   const set = (field, value) => {
@@ -36,9 +52,9 @@ const ProductForm = ({ product, categories, onSubmit, loading }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = 'Nom requis';
-    if (!form.category_id) e.category_id = 'Catégorie requise';
-    if (!form.price || isNaN(form.price) || form.price < 0) e.price = 'Prix valide requis';
+    if (!form.designation.trim()) e.designation = 'Désignation requise';
+    if (!form.category_id) e.category_id = 'Famille requise';
+    if (!form.price || isNaN(form.price) || form.price < 0) e.price = 'Prix d\'acquisition HT unitaire valide requis';
     if (form.quantity < 0) e.quantity = 'Quantité positive requise';
     if (form.alert_threshold < 0) e.alert_threshold = 'Seuil positif requis';
     setErrors(e);
@@ -54,34 +70,49 @@ const ProductForm = ({ product, categories, onSubmit, loading }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <FormField label="Nom du produit" required error={errors.name}>
-            <Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ex: Ordinateur Portable HP" />
+          <FormField label="Désignation" required error={errors.designation}>
+            <Input value={form.designation} onChange={e => set('designation', e.target.value)} placeholder="Ex: Climatiseur split système mural 9000 BTU..." />
           </FormField>
         </div>
-        <FormField label="Catégorie" required error={errors.category_id}>
+        <FormField label="Famille" required error={errors.category_id}>
           <Select value={form.category_id} onChange={e => set('category_id', e.target.value)}>
             <option value="">-- Sélectionner --</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </FormField>
-        <FormField label="Fournisseur" error={errors.supplier}>
-          <Input value={form.supplier} onChange={e => set('supplier', e.target.value)} placeholder="Ex: HP Maroc" />
+        <FormField label="N° d'inv DPIEPEECFBS" error={errors.inventory_number}>
+          <Input value={form.inventory_number} onChange={e => set('inventory_number', e.target.value)} placeholder="Ex: 136" />
         </FormField>
-        <FormField label="Prix unitaire (DH)" required error={errors.price}>
+        <FormField label="Marque" error={errors.brand}>
+          <Input value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="Ex: DAIKO" />
+        </FormField>
+        <FormField label="N° de série" error={errors.serial_number}>
+          <Input value={form.serial_number} onChange={e => set('serial_number', e.target.value)} placeholder="Ex: 25278886876" />
+        </FormField>
+        <FormField label="Localisation" error={errors.location}>
+          <Input value={form.location} onChange={e => set('location', e.target.value)} placeholder="Ex: DPIEPEECFBS" />
+        </FormField>
+        <FormField label="Service utilisateur" error={errors.user_service}>
+          <Input value={form.user_service} onChange={e => set('user_service', e.target.value)} placeholder="Ex: BUREAU 2" />
+        </FormField>
+        <FormField label="Référence d'achat" error={errors.purchase_reference}>
+          <Input value={form.purchase_reference} onChange={e => set('purchase_reference', e.target.value)} placeholder="Ex: BC01/2024" />
+        </FormField>
+        <FormField label="Prix d'acquisition HT unitaire (DH)" required error={errors.price}>
           <Input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="0" />
         </FormField>
         <FormField label="Quantité initiale" required error={errors.quantity}>
-          <Input type="number" min="0" value={form.quantity} onChange={e => set('quantity', parseInt(e.target.value) || 0)} />
+          <Input type="number" min="0" value={form.quantity} onChange={e => set('quantity', parseInt(e.target.value) || 0)} disabled={!!product} />
         </FormField>
-        <FormField label="Code-barres" error={errors.barcode}>
-          <Input value={form.barcode} onChange={e => set('barcode', e.target.value)} placeholder="Ex: HP-NB-001" />
-        </FormField>
-        <FormField label="Seuil d'alerte" required error={errors.alert_threshold}>
+        <FormField label="Seuil d'alerte stock" required error={errors.alert_threshold}>
           <Input type="number" min="0" value={form.alert_threshold} onChange={e => set('alert_threshold', parseInt(e.target.value) || 0)} />
         </FormField>
+        <FormField label="Fournisseur (optionnel)" error={errors.supplier}>
+          <Input value={form.supplier} onChange={e => set('supplier', e.target.value)} placeholder="Ex: HP Maroc" />
+        </FormField>
         <div className="sm:col-span-2">
-          <FormField label="Description" error={errors.description}>
-            <Textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Description du produit..." />
+          <FormField label="Description / Notes" error={errors.description}>
+            <Textarea rows={2} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Description optionnelle..." />
           </FormField>
         </div>
       </div>
@@ -90,7 +121,7 @@ const ProductForm = ({ product, categories, onSubmit, loading }) => {
           className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
         >
           {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-          {product ? 'Mettre à jour' : 'Créer le produit'}
+          {product ? 'Mettre à jour le bien' : 'Créer le bien'}
         </button>
       </div>
     </form>
@@ -148,7 +179,7 @@ const ProductImportForm = ({ onSuccess, onCancel }) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'modele_import_produits.xlsx');
+      link.setAttribute('download', 'modele_import_inventaire.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -408,8 +439,8 @@ const Products = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Produits</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{meta?.total ?? '—'} produits au total</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Inventaire DPIEPEECFBS</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{meta?.total ?? '—'} biens au total</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -448,7 +479,7 @@ const Products = () => {
             onClick={() => setModal('create')}
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm shadow-blue-500/30 transition-colors text-sm"
           >
-            <Plus className="w-4 h-4" /> Nouveau Produit
+            <Plus className="w-4 h-4" /> Nouveau Bien
           </button>
         </div>
       </div>
@@ -460,14 +491,14 @@ const Products = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <Input
               className="pl-10"
-              placeholder="Rechercher par nom, code-barres, fournisseur..."
+              placeholder="Rechercher par désignation, n° d'inv, marque, service, réf..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex gap-2">
             <Select value={catFilter} onChange={e => setCatFilter(e.target.value)} className="w-44">
-              <option value="">Toutes catégories</option>
+              <option value="">Toutes familles</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
             <Select value={stockFilter} onChange={e => setStockFilter(e.target.value)} className="w-40">
@@ -479,16 +510,16 @@ const Products = () => {
 
       {/* Product Grid */}
       {loading ? (
-        <Loader text="Chargement des produits..." />
+        <Loader text="Chargement de l'inventaire..." />
       ) : products.length === 0 ? (
         <EmptyState
           icon={Package}
-          title="Aucun produit trouvé"
-          description={search || catFilter || stockFilter ? "Essayez de modifier vos filtres de recherche." : "Commencez par créer votre premier produit."}
+          title="Aucun bien trouvé"
+          description={search || catFilter || stockFilter ? "Essayez de modifier vos filtres de recherche." : "Commencez par créer votre premier bien."}
           action={
             !search && !catFilter && !stockFilter && (
               <button onClick={() => setModal('create')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-colors">
-                <Plus className="w-4 h-4" /> Créer un produit
+                <Plus className="w-4 h-4" /> Créer un bien
               </button>
             )
           }
@@ -522,9 +553,15 @@ const Products = () => {
                     </button>
                   </div>
                 </div>
-                <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1 line-clamp-2">{p.name}</h3>
-                <p className="text-xs text-slate-400 mb-3">{p.category?.name}</p>
-                <div className="flex items-end justify-between">
+                <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1 line-clamp-2" title={p.designation}>{p.designation}</h3>
+                <p className="text-xs text-slate-400 mb-2">{p.category?.name}</p>
+                <div className="space-y-1 mb-3 text-[11px] text-slate-500 border-t border-slate-50 pt-2">
+                  <p><span className="font-semibold text-slate-600">N° Inv:</span> {p.inventory_number || '—'}</p>
+                  <p><span className="font-semibold text-slate-600">Loc:</span> {p.location || '—'} <span className="text-slate-300">|</span> <span className="font-semibold text-slate-600">Svc:</span> {p.user_service || '—'}</p>
+                  <p><span className="font-semibold text-slate-600">Marque:</span> {p.brand || '—'} <span className="text-slate-300">|</span> <span className="font-semibold text-slate-600">S/N:</span> {p.serial_number || '—'}</p>
+                  <p><span className="font-semibold text-slate-600">Réf Achat:</span> {p.purchase_reference || '—'}</p>
+                </div>
+                <div className="flex items-end justify-between border-t border-slate-50 pt-2">
                   <div>
                     {stockBadge(p)}
                     <p className="text-xs text-slate-500 mt-1.5">
@@ -538,7 +575,6 @@ const Products = () => {
                     </p>
                   </div>
                 </div>
-                {p.supplier && <p className="text-xs text-slate-400 mt-2 truncate">📦 {p.supplier}</p>}
               </div>
             </div>
           ))}
@@ -548,17 +584,17 @@ const Products = () => {
       <Pagination meta={meta} onPageChange={setPage} />
 
       {/* Create Modal */}
-      <Modal isOpen={modal === 'create'} onClose={() => setModal(null)} title="Nouveau Produit" maxWidth="max-w-2xl">
+      <Modal isOpen={modal === 'create'} onClose={() => setModal(null)} title="Nouveau Bien d'Inventaire" maxWidth="max-w-2xl">
         <ProductForm categories={categories} onSubmit={handleCreate} loading={formLoading} />
       </Modal>
 
       {/* Import Modal */}
-      <Modal isOpen={modal === 'import'} onClose={() => setModal(null)} title="Importer des Produits" maxWidth="max-w-xl">
+      <Modal isOpen={modal === 'import'} onClose={() => setModal(null)} title="Importer des Biens d'Inventaire" maxWidth="max-w-xl">
         <ProductImportForm onSuccess={() => { setModal(null); load(); }} onCancel={() => setModal(null)} />
       </Modal>
 
       {/* Edit Modal */}
-      <Modal isOpen={modal === 'edit'} onClose={() => { setModal(null); setEditing(null); }} title="Modifier le Produit" maxWidth="max-w-2xl">
+      <Modal isOpen={modal === 'edit'} onClose={() => { setModal(null); setEditing(null); }} title="Modifier le Bien" maxWidth="max-w-2xl">
         {editing && <ProductForm product={editing} categories={categories} onSubmit={handleUpdate} loading={formLoading} />}
       </Modal>
 
@@ -567,8 +603,8 @@ const Products = () => {
         isOpen={!!deleteTarget}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Supprimer le produit"
-        message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.name}" ? Cette action est irréversible et supprimera également l'historique des mouvements.`}
+        title="Supprimer le bien d'inventaire"
+        message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.designation}" ? Cette action est irréversible et supprimera également l'historique des mouvements associés.`}
       />
     </div>
   );

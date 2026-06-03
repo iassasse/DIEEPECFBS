@@ -21,8 +21,13 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%")
+                $q->where('designation', 'like', "%{$search}%")
+                  ->orWhere('inventory_number', 'like', "%{$search}%")
+                  ->orWhere('brand', 'like', "%{$search}%")
+                  ->orWhere('serial_number', 'like', "%{$search}%")
+                  ->orWhere('user_service', 'like', "%{$search}%")
+                  ->orWhere('purchase_reference', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
                   ->orWhere('supplier', 'like', "%{$search}%");
             });
         }
@@ -44,22 +49,34 @@ class ProductController extends Controller
         }
 
         $perPage = (int)($request->per_page ?? 15);
-        $products = $query->orderBy('name')->paginate($perPage);
+        $products = $query->orderBy('designation')->paginate($perPage);
 
         return response()->json($products);
     }
 
     public function store(Request $request)
     {
+        if ($request->has('name') && !$request->has('designation')) {
+            $request->merge(['designation' => $request->input('name')]);
+        }
+        if ($request->has('barcode') && !$request->has('inventory_number')) {
+            $request->merge(['inventory_number' => $request->input('barcode')]);
+        }
+
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'description'     => 'nullable|string|max:2000',
-            'category_id'     => 'required|exists:categories,id',
-            'quantity'        => 'required|integer|min:0',
-            'price'           => 'required|numeric|min:0',
-            'barcode'         => 'nullable|string|max:100|unique:products,barcode',
-            'supplier'        => 'nullable|string|max:255',
-            'alert_threshold' => 'required|integer|min:0',
+            'designation'        => 'required|string|max:2000',
+            'description'        => 'nullable|string|max:2000',
+            'category_id'        => 'required|exists:categories,id',
+            'quantity'           => 'required|integer|min:0',
+            'price'              => 'required|numeric|min:0',
+            'inventory_number'   => 'nullable|string|max:100|unique:products,inventory_number',
+            'location'           => 'nullable|string|max:255',
+            'brand'              => 'nullable|string|max:255',
+            'serial_number'      => 'nullable|string|max:255',
+            'user_service'       => 'nullable|string|max:255',
+            'purchase_reference' => 'nullable|string|max:255',
+            'supplier'           => 'nullable|string|max:255',
+            'alert_threshold'    => 'required|integer|min:0',
         ]);
 
         $product = Product::create($validated);
@@ -94,15 +111,27 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        if ($request->has('name') && !$request->has('designation')) {
+            $request->merge(['designation' => $request->input('name')]);
+        }
+        if ($request->has('barcode') && !$request->has('inventory_number')) {
+            $request->merge(['inventory_number' => $request->input('barcode')]);
+        }
+
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'description'     => 'nullable|string|max:2000',
-            'category_id'     => 'required|exists:categories,id',
-            'quantity'        => 'required|integer|min:0',
-            'price'           => 'required|numeric|min:0',
-            'barcode'         => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->ignore($product->id)],
-            'supplier'        => 'nullable|string|max:255',
-            'alert_threshold' => 'required|integer|min:0',
+            'designation'        => 'required|string|max:2000',
+            'description'        => 'nullable|string|max:2000',
+            'category_id'        => 'required|exists:categories,id',
+            'quantity'           => 'required|integer|min:0',
+            'price'              => 'required|numeric|min:0',
+            'inventory_number'   => ['nullable', 'string', 'max:100', Rule::unique('products', 'inventory_number')->ignore($product->id)],
+            'location'           => 'nullable|string|max:255',
+            'brand'              => 'nullable|string|max:255',
+            'serial_number'      => 'nullable|string|max:255',
+            'user_service'       => 'nullable|string|max:255',
+            'purchase_reference' => 'nullable|string|max:255',
+            'supplier'           => 'nullable|string|max:255',
+            'alert_threshold'    => 'required|integer|min:0',
         ]);
 
         $product->update($validated);
@@ -132,9 +161,9 @@ class ProductController extends Controller
                 'data' => json_encode([
                     'type'       => 'low_stock',
                     'title'      => 'Stock Faible',
-                    'message'    => "Le produit \"{$product->name}\" a atteint son seuil d'alerte (quantité: {$product->quantity}, seuil: {$product->alert_threshold}).",
+                    'message'    => "Le produit \"{$product->designation}\" a atteint son seuil d'alerte (quantité: {$product->quantity}, seuil: {$product->alert_threshold}).",
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
+                    'product_name' => $product->designation,
                     'quantity'   => $product->quantity,
                     'threshold'  => $product->alert_threshold,
                 ]),

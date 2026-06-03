@@ -67,25 +67,33 @@ class ReportController extends Controller
         if ($type === 'stock') {
             $filename .= 'stock_' . date('Ymd_His') . '.xlsx';
             $headings = [
-                'Nom du produit',
-                'Code-barres',
-                'Catégorie',
-                'Quantité en stock',
-                'Prix unitaire (DH)',
+                'N° d\'inv DPIEPEECFBS',
+                'Famille',
+                'Quantité',
+                'Désignation',
+                'Localisation',
+                'Marque',
+                'N°de série',
+                'Service utilisateur',
+                'Référence d\'achat',
+                'Prix d\'acquisition HT unitaire',
                 'Valeur du stock (DH)',
-                'Seuil d\'alerte',
                 'Statut'
             ];
             foreach ($items as $item) {
                 $statusStr = $item['status'] === 'out' ? 'Rupture' : ($item['status'] === 'low' ? 'Faible' : 'Normal');
                 $data[] = [
-                    $item['name'],
-                    $item['barcode'],
+                    $item['inventory_number'],
                     $item['category_name'],
                     $item['quantity'],
+                    $item['designation'],
+                    $item['location'],
+                    $item['brand'],
+                    $item['serial_number'],
+                    $item['user_service'],
+                    $item['purchase_reference'],
                     $item['price'],
                     $item['stock_value'],
-                    $item['alert_threshold'],
                     $statusStr
                 ];
             }
@@ -94,9 +102,9 @@ class ReportController extends Controller
             $filename .= 'mouvements_' . date('Ymd_His') . '.xlsx';
             $headings = [
                 'Référence',
-                'Nom du produit',
-                'Code-barres',
-                'Catégorie',
+                'N° d\'inv DPIEPEECFBS',
+                'Désignation',
+                'Famille',
                 'Type',
                 'Quantité',
                 'Opérateur',
@@ -107,8 +115,8 @@ class ReportController extends Controller
                 $typeStr = $item['type'] === 'entry' ? 'Entrée' : 'Sortie';
                 $data[] = [
                     $item['reference'],
-                    $item['product_name'],
                     $item['product_barcode'],
+                    $item['product_name'],
                     $item['category_name'],
                     $typeStr,
                     $item['quantity'],
@@ -121,21 +129,29 @@ class ReportController extends Controller
         } elseif ($type === 'valuation') {
             $filename .= 'valorisation_' . date('Ymd_His') . '.xlsx';
             $headings = [
-                'Nom du produit',
-                'Code-barres',
-                'Catégorie',
-                'Fournisseur',
-                'Quantité en stock',
-                'Prix unitaire (DH)',
+                'N° d\'inv DPIEPEECFBS',
+                'Famille',
+                'Quantité',
+                'Désignation',
+                'Localisation',
+                'Marque',
+                'N°de série',
+                'Service utilisateur',
+                'Référence d\'achat',
+                'Prix d\'acquisition HT unitaire',
                 'Valeur totale (DH)'
             ];
             foreach ($items as $item) {
                 $data[] = [
-                    $item['name'],
-                    $item['barcode'],
+                    $item['inventory_number'],
                     $item['category_name'],
-                    $item['supplier'],
                     $item['quantity'],
+                    $item['designation'],
+                    $item['location'],
+                    $item['brand'],
+                    $item['serial_number'],
+                    $item['user_service'],
+                    $item['purchase_reference'],
                     $item['price'],
                     $item['stock_value']
                 ];
@@ -177,7 +193,7 @@ class ReportController extends Controller
                 }
             }
             
-            $products = $query->orderBy('name')->get();
+            $products = $query->orderBy('designation')->get();
             
             $items = [];
             $totalProducts = 0;
@@ -200,15 +216,22 @@ class ReportController extends Controller
                 }
                 
                 $items[] = [
-                    'id'              => $p->id,
-                    'name'            => $p->name,
-                    'barcode'         => $p->barcode,
-                    'category_name'   => $p->category?->name ?? 'Général',
-                    'quantity'        => $p->quantity,
-                    'price'           => $p->price,
-                    'stock_value'     => $val,
-                    'alert_threshold' => $p->alert_threshold,
-                    'status'          => $status
+                    'id'                 => $p->id,
+                    'name'               => $p->designation,
+                    'designation'        => $p->designation,
+                    'barcode'            => $p->inventory_number,
+                    'inventory_number'   => $p->inventory_number,
+                    'category_name'      => $p->category?->name ?? 'Général',
+                    'quantity'           => $p->quantity,
+                    'price'              => $p->price,
+                    'stock_value'        => $val,
+                    'alert_threshold'    => $p->alert_threshold,
+                    'location'           => $p->location,
+                    'brand'              => $p->brand,
+                    'serial_number'      => $p->serial_number,
+                    'user_service'       => $p->user_service,
+                    'purchase_reference' => $p->purchase_reference,
+                    'status'             => $status
                 ];
             }
             
@@ -239,7 +262,7 @@ class ReportController extends Controller
             if ($endDate) {
                 $query->where('created_at', '<=', $endDate . ' 23:59:59');
             }
-            if ($request->query('movement_type')) { // entry or exit
+            if ($request->query('movement_type')) {
                 $query->where('type', $request->query('movement_type'));
             }
             
@@ -261,8 +284,8 @@ class ReportController extends Controller
                 $items[] = [
                     'id'              => $m->id,
                     'reference'       => $m->reference,
-                    'product_name'    => $m->product?->name ?? 'Produit supprimé',
-                    'product_barcode' => $m->product?->barcode ?? '-',
+                    'product_name'    => $m->product?->designation ?? 'Biens supprimés',
+                    'product_barcode' => $m->product?->inventory_number ?? '-',
                     'category_name'   => $m->product?->category?->name ?? 'Général',
                     'type'            => $m->type,
                     'quantity'        => $m->quantity,
@@ -291,7 +314,7 @@ class ReportController extends Controller
                 $query->where('id', $productId);
             }
             
-            $products = $query->orderBy('name')->get();
+            $products = $query->orderBy('designation')->get();
             
             $items = [];
             $totalItemsCount = 0;
@@ -307,14 +330,21 @@ class ReportController extends Controller
                 }
                 
                 $items[] = [
-                    'id'            => $p->id,
-                    'name'          => $p->name,
-                    'barcode'       => $p->barcode,
-                    'category_name' => $p->category?->name ?? 'Général',
-                    'supplier'      => $p->supplier ?? 'Aucun',
-                    'quantity'      => $p->quantity,
-                    'price'         => $p->price,
-                    'stock_value'   => $val,
+                    'id'                 => $p->id,
+                    'name'               => $p->designation,
+                    'designation'        => $p->designation,
+                    'barcode'            => $p->inventory_number,
+                    'inventory_number'   => $p->inventory_number,
+                    'category_name'      => $p->category?->name ?? 'Général',
+                    'supplier'           => $p->supplier ?? 'Aucun',
+                    'quantity'           => $p->quantity,
+                    'price'              => $p->price,
+                    'stock_value'        => $val,
+                    'location'           => $p->location,
+                    'brand'              => $p->brand,
+                    'serial_number'      => $p->serial_number,
+                    'user_service'       => $p->user_service,
+                    'purchase_reference' => $p->purchase_reference,
                 ];
             }
             

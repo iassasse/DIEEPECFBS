@@ -42,7 +42,8 @@ class StockMovementController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('reference', 'like', "%{$search}%")
                   ->orWhereHas('product', function ($pq) use ($search) {
-                      $pq->where('name', 'like', "%{$search}%");
+                      $pq->where('designation', 'like', "%{$search}%")
+                        ->orWhere('inventory_number', 'like', "%{$search}%");
                   });
             });
         }
@@ -140,9 +141,9 @@ class StockMovementController extends Controller
                 'data' => json_encode([
                     'type'         => 'low_stock',
                     'title'        => 'Stock Faible',
-                    'message'      => "Le produit \"{$product->name}\" a un stock faible (quantité: {$product->quantity}, seuil: {$product->alert_threshold}).",
+                    'message'      => "Le produit \"{$product->designation}\" a un stock faible (quantité: {$product->quantity}, seuil: {$product->alert_threshold}).",
                     'product_id'   => $product->id,
-                    'product_name' => $product->name,
+                    'product_name' => $product->designation,
                     'quantity'     => $product->quantity,
                     'threshold'    => $product->alert_threshold,
                 ]),

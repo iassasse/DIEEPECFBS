@@ -30,7 +30,7 @@ const MovementForm = ({ products, onSubmit, loading }) => {
         <Select value={form.product_id} onChange={e => set('product_id', e.target.value)}>
           <option value="">-- Sélectionner un produit --</option>
           {products.map(p => (
-            <option key={p.id} value={p.id}>{p.name} (stock: {p.quantity})</option>
+            <option key={p.id} value={p.id}>{p.designation} (stock: {p.quantity})</option>
           ))}
         </Select>
       </FormField>
@@ -289,7 +289,7 @@ const Stock = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {['Type', 'Produit', 'Catégorie', 'Quantité', 'Référence', 'Opérateur', 'Date', ''].map(h => (
+                  {['Type', 'Désignation', 'Famille', 'Quantité', 'Référence', 'Opérateur', 'Date', ''].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -306,7 +306,10 @@ const Stock = () => {
                         {m.type === 'entry' ? 'Entrée' : 'Sortie'}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-sm font-semibold text-slate-800">{m.product?.name}</td>
+                    <td className="px-4 py-3.5 text-sm font-semibold text-slate-800">
+                      <div>{m.product?.designation}</div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">N° Inv: {m.product?.inventory_number || '—'}</div>
+                    </td>
                     <td className="px-4 py-3.5 text-sm text-slate-500">{m.product?.category?.name}</td>
                     <td className="px-4 py-3.5">
                       <span className={`text-sm font-bold ${m.type === 'entry' ? 'text-emerald-600' : 'text-red-600'}`}>

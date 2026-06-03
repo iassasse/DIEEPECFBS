@@ -107,7 +107,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($p) => [
                 'id'              => $p->id,
-                'name'            => $p->name,
+                'name'            => $p->designation,
                 'quantity'        => $p->quantity,
                 'alert_threshold' => $p->alert_threshold,
                 'category'        => $p->category?->name,
@@ -122,7 +122,7 @@ class DashboardController extends Controller
                 'id'         => $m->id,
                 'type'       => $m->type,
                 'quantity'   => $m->quantity,
-                'product'    => $m->product?->name,
+                'product'    => $m->product?->designation,
                 'user'       => $m->user?->name,
                 'reference'  => $m->reference,
                 'created_at' => $m->created_at,

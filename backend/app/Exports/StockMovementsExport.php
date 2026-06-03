@@ -46,7 +46,8 @@ class StockMovementsExport implements FromCollection, WithHeadings, WithMapping,
             $query->where(function ($q) use ($search) {
                 $q->where('reference', 'like', "%{$search}%")
                   ->orWhereHas('product', function ($pq) use ($search) {
-                      $pq->where('name', 'like', "%{$search}%");
+                      $pq->where('designation', 'like', "%{$search}%")
+                        ->orWhere('inventory_number', 'like', "%{$search}%");
                   });
             });
         }
@@ -59,8 +60,8 @@ class StockMovementsExport implements FromCollection, WithHeadings, WithMapping,
         return [
             'ID',
             'Type de Mouvement',
-            'Produit',
-            'Catégorie du Produit',
+            'Désignation',
+            'Famille',
             'Quantité',
             'Référence',
             'Notes',
@@ -75,7 +76,7 @@ class StockMovementsExport implements FromCollection, WithHeadings, WithMapping,
         return [
             $m->id,
             $m->type === 'entry' ? 'Entrée' : 'Sortie',
-            $m->product?->name ?? 'Produit supprimé',
+            $m->product?->designation ?? 'Biens supprimés',
             $m->product?->category?->name ?? 'Général',
             $m->type === 'entry' ? $m->quantity : -$m->quantity,
             $m->reference,

@@ -121,8 +121,8 @@ const Layout = () => {
 
   const allMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard',    path: '/',          roles: null },
-    { icon: Package,         label: 'Produits',     path: '/products',  roles: null },
-    { icon: Tag,             label: 'Catégories',   path: '/categories',roles: null },
+    { icon: Package,         label: 'Inventaire',   path: '/products',  roles: null },
+    { icon: Tag,             label: 'Familles',     path: '/categories',roles: null },
     { icon: ArrowRightLeft,  label: 'Mouvements',   path: '/stock',     roles: null },
     { icon: Users,           label: 'Utilisateurs', path: '/users',     roles: ['Admin'] },
     { icon: FileText,        label: 'Rapports',     path: '/reports',   roles: null },

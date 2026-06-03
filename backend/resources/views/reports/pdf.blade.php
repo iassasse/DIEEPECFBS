@@ -245,34 +245,32 @@
         <thead>
             @if($type === 'stock')
                 <tr>
-                    <th style="width: 25%;">Nom du produit</th>
-                    <th style="width: 15%;">Code-barres</th>
-                    <th style="width: 15%;">Catégorie</th>
-                    <th style="width: 10%; text-align: right;">Qté</th>
-                    <th style="width: 12%; text-align: right;">P.U. (DH)</th>
-                    <th style="width: 13%; text-align: right;">Valeur (DH)</th>
+                    <th style="width: 35%;">Désignation / Détails</th>
+                    <th style="width: 15%;">N° d'inv</th>
+                    <th style="width: 15%;">Famille</th>
+                    <th style="width: 7%; text-align: right;">Qté</th>
+                    <th style="width: 13%; text-align: right;">P.U. Acquisition</th>
+                    <th style="width: 15%; text-align: right;">Valeur Stock</th>
                     <th style="width: 10%; text-align: center;">Statut</th>
                 </tr>
             @elseif($type === 'movements')
                 <tr>
                     <th style="width: 12%;">Référence</th>
-                    <th style="width: 23%;">Produit</th>
-                    <th style="width: 12%;">Catégorie</th>
+                    <th style="width: 33%;">Désignation</th>
+                    <th style="width: 15%;">Famille</th>
                     <th style="width: 8%; text-align: center;">Type</th>
                     <th style="width: 8%; text-align: right;">Qté</th>
                     <th style="width: 12%;">Opérateur</th>
-                    <th style="width: 15%;">Date</th>
-                    <th style="width: 10%;">Notes</th>
+                    <th style="width: 12%;">Date</th>
                 </tr>
             @elseif($type === 'valuation')
                 <tr>
-                    <th style="width: 30%;">Nom du produit</th>
-                    <th style="width: 15%;">Code-barres</th>
-                    <th style="width: 15%;">Catégorie</th>
-                    <th style="width: 15%;">Fournisseur</th>
+                    <th style="width: 35%;">Désignation / Détails</th>
+                    <th style="width: 15%;">N° d'inv</th>
+                    <th style="width: 15%;">Famille</th>
                     <th style="width: 8%; text-align: right;">Qté</th>
-                    <th style="width: 12%; text-align: right;">P.U. (DH)</th>
-                    <th style="width: 15%; text-align: right;">Valeur Totale (DH)</th>
+                    <th style="width: 12%; text-align: right;">P.U. Acquisition</th>
+                    <th style="width: 15%; text-align: right;">Valeur Totale</th>
                 </tr>
             @endif
         </thead>
@@ -280,12 +278,17 @@
             @forelse($items as $item)
                 @if($type === 'stock')
                     <tr>
-                        <td>{{ $item['name'] }}</td>
-                        <td>{{ $item['barcode'] }}</td>
+                        <td>
+                            <div class="font-bold" style="font-size: 9px; color: #1E293B;">{{ $item['designation'] }}</div>
+                            <div style="font-size: 7.5px; color: #64748B; margin-top: 2px;">
+                                Loc: {{ $item['location'] ?: '__' }} | Marque: {{ $item['brand'] ?: '__' }} | S/N: {{ $item['serial_number'] ?: '__' }} | Svc: {{ $item['user_service'] ?: '__' }} | Réf: {{ $item['purchase_reference'] ?: '__' }}
+                            </div>
+                        </td>
+                        <td>{{ $item['inventory_number'] ?: '-' }}</td>
                         <td>{{ $item['category_name'] }}</td>
                         <td class="text-right font-bold">{{ $item['quantity'] }}</td>
-                        <td class="text-right">{{ number_format($item['price'], 0, ',', ' ') }}</td>
-                        <td class="text-right font-bold">{{ number_format($item['stock_value'], 0, ',', ' ') }}</td>
+                        <td class="text-right">{{ number_format($item['price'], 0, ',', ' ') }} DH</td>
+                        <td class="text-right font-bold">{{ number_format($item['stock_value'], 0, ',', ' ') }} DH</td>
                         <td class="text-center">
                             @if($item['status'] === 'out')
                                 <span class="badge badge-out">Rupture</span>
@@ -300,8 +303,8 @@
                     <tr>
                         <td class="font-bold">{{ $item['reference'] }}</td>
                         <td>
-                            <div>{{ $item['product_name'] }}</div>
-                            <div style="font-size: 7.5px; color: #64748B;">S/N: {{ $item['product_barcode'] }}</div>
+                            <div class="font-bold" style="font-size: 9px;">{{ $item['product_name'] }}</div>
+                            <div style="font-size: 7.5px; color: #64748B;">N° Inv: {{ $item['product_barcode'] }}</div>
                         </td>
                         <td>{{ $item['category_name'] }}</td>
                         <td class="text-center">
@@ -314,16 +317,19 @@
                         <td class="text-right font-bold">{{ $item['quantity'] }}</td>
                         <td>{{ $item['user_name'] }}</td>
                         <td>{{ date('d/m/Y H:i', strtotime($item['created_at'])) }}</td>
-                        <td style="font-size: 8px; color: #64748B;">{{ $item['notes'] }}</td>
                     </tr>
                 @elseif($type === 'valuation')
                     <tr>
-                        <td>{{ $item['name'] }}</td>
-                        <td>{{ $item['barcode'] }}</td>
+                        <td>
+                            <div class="font-bold" style="font-size: 9px; color: #1E293B;">{{ $item['designation'] }}</div>
+                            <div style="font-size: 7.5px; color: #64748B; margin-top: 2px;">
+                                Loc: {{ $item['location'] ?: '__' }} | Marque: {{ $item['brand'] ?: '__' }} | S/N: {{ $item['serial_number'] ?: '__' }} | Svc: {{ $item['user_service'] ?: '__' }} | Réf: {{ $item['purchase_reference'] ?: '__' }}
+                            </div>
+                        </td>
+                        <td>{{ $item['inventory_number'] ?: '-' }}</td>
                         <td>{{ $item['category_name'] }}</td>
-                        <td>{{ $item['supplier'] }}</td>
                         <td class="text-right font-bold">{{ $item['quantity'] }}</td>
-                        <td class="text-right">{{ number_format($item['price'], 0, ',', ' ') }}</td>
+                        <td class="text-right">{{ number_format($item['price'], 0, ',', ' ') }} DH</td>
                         <td class="text-right font-bold" style="color: #6D28D9;">{{ number_format($item['stock_value'], 0, ',', ' ') }} DH</td>
                     </tr>
                 @endif

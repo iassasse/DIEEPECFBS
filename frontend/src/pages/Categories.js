@@ -28,8 +28,8 @@ const CategoryForm = ({ category, onSubmit, loading }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FormField label="Nom de la catégorie" required error={errors.name}>
-        <Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ex: Informatique" />
+      <FormField label="Nom de la famille" required error={errors.name}>
+        <Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ex: Achat de matériel informatique" />
       </FormField>
       <FormField label="Description" error={errors.description}>
         <Textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Description optionnelle..." />
@@ -38,7 +38,7 @@ const CategoryForm = ({ category, onSubmit, loading }) => {
         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
       >
         {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-        {category ? 'Mettre à jour' : 'Créer la catégorie'}
+        {category ? 'Mettre à jour' : 'Créer la famille'}
       </button>
     </form>
   );
@@ -72,7 +72,7 @@ const Categories = () => {
         if (data.data) { setCategories(data.data); setMeta(data.meta); }
         else { setCategories(data); setMeta(null); }
       })
-      .catch(() => toast.error('Erreur lors du chargement.'))
+      .catch(() => toast.error('Erreur lors du chargement des familles.'))
       .finally(() => setLoading(false));
   }, [page, search]);
 
@@ -83,7 +83,7 @@ const Categories = () => {
     setFormLoading(true);
     try {
       await api.post('/categories', form);
-      toast.success('Catégorie créée !');
+      toast.success('Famille créée !');
       setModal(null); load();
     } catch (err) {
       toast.error(err.response?.data?.message || Object.values(err.response?.data?.errors || {})[0]?.[0] || 'Erreur.');
@@ -94,7 +94,7 @@ const Categories = () => {
     setFormLoading(true);
     try {
       await api.put(`/categories/${editing.id}`, form);
-      toast.success('Catégorie mise à jour !');
+      toast.success('Famille mise à jour !');
       setModal(null); setEditing(null); load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Erreur.');
@@ -104,10 +104,10 @@ const Categories = () => {
   const handleDelete = async () => {
     try {
       await api.delete(`/categories/${deleteTarget.id}`);
-      toast.success('Catégorie supprimée.');
+      toast.success('Famille supprimée.');
       setDeleteTarget(null); load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Impossible de supprimer cette catégorie.');
+      toast.error(err.response?.data?.message || 'Impossible de supprimer cette famille.');
     }
   };
 
@@ -116,14 +116,14 @@ const Categories = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Catégories</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{meta?.total ?? categories.length} catégories au total</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Familles</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{meta?.total ?? categories.length} familles au total</p>
         </div>
         <button
           onClick={() => setModal('create')}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm shadow-blue-500/30 transition-colors text-sm"
         >
-          <Plus className="w-4 h-4" /> Nouvelle Catégorie
+          <Plus className="w-4 h-4" /> Nouvelle Famille
         </button>
       </div>
 
@@ -131,21 +131,21 @@ const Categories = () => {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
         <div className="relative max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <Input className="pl-10" placeholder="Rechercher une catégorie..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Input className="pl-10" placeholder="Rechercher une famille..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
       </div>
 
       {/* Grid */}
       {loading ? (
-        <Loader text="Chargement des catégories..." />
+        <Loader text="Chargement des familles..." />
       ) : categories.length === 0 ? (
         <EmptyState
           icon={Tag}
-          title="Aucune catégorie"
-          description={search ? "Aucune catégorie ne correspond à votre recherche." : "Créez votre première catégorie pour organiser vos produits."}
+          title="Aucune famille"
+          description={search ? "Aucune famille ne correspond à votre recherche." : "Créez votre première famille pour organiser votre inventaire."}
           action={!search && (
             <button onClick={() => setModal('create')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm">
-              <Plus className="w-4 h-4" /> Créer une catégorie
+              <Plus className="w-4 h-4" /> Créer une famille
             </button>
           )}
         />
@@ -174,7 +174,7 @@ const Categories = () => {
                 <p className="text-sm text-slate-500 line-clamp-2 mb-3">{cat.description || 'Aucune description'}</p>
                 <div className="flex items-center gap-2">
                   <Package className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs text-slate-500 font-medium">{cat.products_count ?? 0} produit(s)</span>
+                  <span className="text-xs text-slate-500 font-medium">{cat.products_count ?? 0} bien(s) associé(s)</span>
                 </div>
               </div>
             </div>
@@ -184,11 +184,11 @@ const Categories = () => {
 
       <Pagination meta={meta} onPageChange={setPage} />
 
-      <Modal isOpen={modal === 'create'} onClose={() => setModal(null)} title="Nouvelle Catégorie">
+      <Modal isOpen={modal === 'create'} onClose={() => setModal(null)} title="Nouvelle Famille">
         <CategoryForm onSubmit={handleCreate} loading={formLoading} />
       </Modal>
 
-      <Modal isOpen={modal === 'edit'} onClose={() => { setModal(null); setEditing(null); }} title="Modifier la Catégorie">
+      <Modal isOpen={modal === 'edit'} onClose={() => { setModal(null); setEditing(null); }} title="Modifier la Famille">
         {editing && <CategoryForm category={editing} onSubmit={handleUpdate} loading={formLoading} />}
       </Modal>
 
@@ -196,8 +196,8 @@ const Categories = () => {
         isOpen={!!deleteTarget}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Supprimer la catégorie"
-        message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.name}" ? Cette action ne sera possible que si aucun produit n'y est associé.`}
+        title="Supprimer la famille"
+        message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.name}" ? Cette action ne sera possible que si aucun bien d'inventaire ne lui est associé.`}
       />
     </div>
   );

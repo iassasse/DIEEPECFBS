@@ -232,12 +232,12 @@ const Reports = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <FormField label="Catégorie">
+          <FormField label="Famille">
             <Select
               value={filters.category_id}
               onChange={e => handleFilterChange('category_id', e.target.value)}
             >
-              <option value="">Toutes les catégories</option>
+              <option value="">Toutes les familles</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -452,20 +452,21 @@ const Reports = () => {
                 <tr className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-100">
                   {reportType === 'stock' && (
                     <>
-                      <th className="px-6 py-3">Produit</th>
-                      <th className="px-6 py-3">Code-barres</th>
-                      <th className="px-6 py-3">Catégorie</th>
+                      <th className="px-6 py-3">Désignation</th>
+                      <th className="px-6 py-3">N° d'inv</th>
+                      <th className="px-6 py-3">Famille</th>
+                      <th className="px-6 py-3">Détails</th>
                       <th className="px-6 py-3 text-right">Quantité</th>
-                      <th className="px-6 py-3 text-right">P.U.</th>
-                      <th className="px-6 py-3 text-right">Valeur</th>
+                      <th className="px-6 py-3 text-right">P.U. Acquisition</th>
+                      <th className="px-6 py-3 text-right">Valeur Stock</th>
                       <th className="px-6 py-3 text-center">Statut</th>
                     </>
                   )}
                   {reportType === 'movements' && (
                     <>
                       <th className="px-6 py-3">Référence</th>
-                      <th className="px-6 py-3">Produit</th>
-                      <th className="px-6 py-3">Catégorie</th>
+                      <th className="px-6 py-3">Désignation</th>
+                      <th className="px-6 py-3">Famille</th>
                       <th className="px-6 py-3 text-center">Type</th>
                       <th className="px-6 py-3 text-right">Quantité</th>
                       <th className="px-6 py-3">Opérateur</th>
@@ -475,12 +476,12 @@ const Reports = () => {
                   )}
                   {reportType === 'valuation' && (
                     <>
-                      <th className="px-6 py-3">Produit</th>
-                      <th className="px-6 py-3">Code-barres</th>
-                      <th className="px-6 py-3">Catégorie</th>
-                      <th className="px-6 py-3">Fournisseur</th>
+                      <th className="px-6 py-3">Désignation</th>
+                      <th className="px-6 py-3">N° d'inv</th>
+                      <th className="px-6 py-3">Famille</th>
+                      <th className="px-6 py-3">Détails</th>
                       <th className="px-6 py-3 text-right">Quantité</th>
-                      <th className="px-6 py-3 text-right">Prix Unitaire</th>
+                      <th className="px-6 py-3 text-right">P.U. Acquisition</th>
                       <th className="px-6 py-3 text-right">Valeur Totale</th>
                     </>
                   )}
@@ -494,12 +495,16 @@ const Reports = () => {
                   >
                     {reportType === 'stock' && (
                       <>
-                        <td className="px-6 py-3.5 font-semibold text-slate-800">{item.name}</td>
-                        <td className="px-6 py-3.5 text-slate-500 font-mono text-xs">{item.barcode}</td>
+                        <td className="px-6 py-3.5 font-semibold text-slate-800">{item.designation}</td>
+                        <td className="px-6 py-3.5 text-slate-500 font-mono text-xs">{item.inventory_number || '—'}</td>
                         <td className="px-6 py-3.5 text-slate-600">{item.category_name}</td>
+                        <td className="px-6 py-3.5 text-xs text-slate-500">
+                          <div><span className="font-medium text-slate-600">Marque:</span> {item.brand || '—'} <span className="text-slate-300">|</span> <span className="font-medium text-slate-600">S/N:</span> {item.serial_number || '—'}</div>
+                          <div className="mt-0.5"><span className="font-medium text-slate-600">Loc:</span> {item.location || '—'} <span className="text-slate-300">|</span> <span className="font-medium text-slate-600">Svc:</span> {item.user_service || '—'}</div>
+                        </td>
                         <td className="px-6 py-3.5 text-right font-bold text-slate-800">{item.quantity}</td>
-                        <td className="px-6 py-3.5 text-right text-slate-500">{new Intl.NumberFormat('fr-FR').format(item.price)}</td>
-                        <td className="px-6 py-3.5 text-right font-bold text-slate-900">{new Intl.NumberFormat('fr-FR').format(item.stock_value)}</td>
+                        <td className="px-6 py-3.5 text-right text-slate-500">{new Intl.NumberFormat('fr-FR').format(item.price)} DH</td>
+                        <td className="px-6 py-3.5 text-right font-bold text-slate-900">{new Intl.NumberFormat('fr-FR').format(item.stock_value)} DH</td>
                         <td className="px-6 py-3.5 text-center">
                           {item.status === 'out' && <Badge variant="danger">Rupture</Badge>}
                           {item.status === 'low' && <Badge variant="warning">Faible</Badge>}
@@ -512,7 +517,7 @@ const Reports = () => {
                         <td className="px-6 py-3.5 font-bold text-slate-800">{item.reference}</td>
                         <td className="px-6 py-3.5">
                           <div className="font-semibold text-slate-800">{item.product_name}</div>
-                          <div className="text-xs text-slate-400 font-mono mt-0.5">{item.product_barcode}</div>
+                          <div className="text-xs text-slate-400 font-mono mt-0.5">N° Inv: {item.product_barcode}</div>
                         </td>
                         <td className="px-6 py-3.5 text-slate-600">{item.category_name}</td>
                         <td className="px-6 py-3.5 text-center">
@@ -537,13 +542,16 @@ const Reports = () => {
                     )}
                     {reportType === 'valuation' && (
                       <>
-                        <td className="px-6 py-3.5 font-semibold text-slate-800">{item.name}</td>
-                        <td className="px-6 py-3.5 text-slate-500 font-mono text-xs">{item.barcode}</td>
+                        <td className="px-6 py-3.5 font-semibold text-slate-800">{item.designation}</td>
+                        <td className="px-6 py-3.5 text-slate-500 font-mono text-xs">{item.inventory_number || '—'}</td>
                         <td className="px-6 py-3.5 text-slate-600">{item.category_name}</td>
-                        <td className="px-6 py-3.5 text-slate-600">{item.supplier}</td>
+                        <td className="px-6 py-3.5 text-xs text-slate-500">
+                          <div><span className="font-medium text-slate-600">Marque:</span> {item.brand || '—'} <span className="text-slate-300">|</span> <span className="font-medium text-slate-600">S/N:</span> {item.serial_number || '—'}</div>
+                          <div className="mt-0.5"><span className="font-medium text-slate-600">Loc:</span> {item.location || '—'} <span className="text-slate-300">|</span> <span className="font-medium text-slate-600">Svc:</span> {item.user_service || '—'}</div>
+                        </td>
                         <td className="px-6 py-3.5 text-right font-bold text-slate-800">{item.quantity}</td>
-                        <td className="px-6 py-3.5 text-right text-slate-500">{new Intl.NumberFormat('fr-FR').format(item.price)}</td>
-                        <td className="px-6 py-3.5 text-right font-bold text-purple-700">{new Intl.NumberFormat('fr-FR').format(item.stock_value)}</td>
+                        <td className="px-6 py-3.5 text-right text-slate-500">{new Intl.NumberFormat('fr-FR').format(item.price)} DH</td>
+                        <td className="px-6 py-3.5 text-right font-bold text-purple-700">{new Intl.NumberFormat('fr-FR').format(item.stock_value)} DH</td>
                       </>
                     )}
                   </tr>

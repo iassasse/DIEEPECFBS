@@ -89,11 +89,11 @@ const Dashboard = () => {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Produits"
+          title="Total Biens"
           value={stats.total_products.toLocaleString('fr-FR')}
           icon={Package}
           colorClass="bg-blue-50 text-blue-600"
-          subtitle={`${stats.total_categories} catégories`}
+          subtitle={`${stats.total_categories} familles`}
         />
         <StatCard
           title="Entrées ce mois"
@@ -233,11 +233,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Categories breakdown */}
+        {/* Familles breakdown */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="mb-5">
-            <h3 className="font-bold text-slate-800">Par Catégorie</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Répartition des produits</p>
+            <h3 className="font-bold text-slate-800">Par Famille</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Répartition des biens</p>
           </div>
           <div className="space-y-3">
             {chart_categories.slice(0, 5).map((cat, i) => (
@@ -247,7 +247,7 @@ const Dashboard = () => {
                     <Tag className="w-3.5 h-3.5" style={{ color: COLORS[i % COLORS.length] }} />
                     <span className="font-medium text-slate-700 truncate max-w-[140px]">{cat.name}</span>
                   </div>
-                  <span className="text-slate-500 text-xs font-medium">{cat.produits} produits</span>
+                  <span className="text-slate-500 text-xs font-medium">{cat.produits} bien(s)</span>
                 </div>
                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div

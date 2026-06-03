@@ -7,9 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
-        'name', 'description', 'category_id', 'quantity', 'price', 
-        'barcode', 'supplier', 'alert_threshold', 'image'
+        'inventory_number', 'designation', 'description', 'category_id', 'quantity', 'price', 
+        'location', 'brand', 'serial_number', 'user_service', 'purchase_reference',
+        'supplier', 'alert_threshold', 'image'
     ];
+
+    protected $appends = ['name', 'barcode'];
+
+    public function getNameAttribute()
+    {
+        return $this->designation;
+    }
+
+    public function getBarcodeAttribute()
+    {
+        return $this->inventory_number;
+    }
 
     public function category()
     {
