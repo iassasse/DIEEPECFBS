@@ -131,6 +131,44 @@ class StockMovementController extends Controller
         return response()->json(['message' => 'Mouvement annulé et stock mis à jour.']);
     }
 
+    public function destroyBulk(Request $request)
+    {
+        if ($request->boolean('all')) {
+            if (!$request->user()->hasRole('Admin')) {
+                return response()->json(['message' => 'Accès non autorisé. Seuls les administrateurs peuvent tout supprimer.'], 403);
+            }
+
+            DB::transaction(function () {
+                StockMovement::query()->delete();
+                Product::query()->update(['quantity' => 0]);
+            });
+
+            return response()->json(['message' => 'Tous les mouvements ont été supprimés et les stocks réinitialisés à 0.']);
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:stock_movements,id'
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $movements = StockMovement::whereIn('id', $validated['ids'])->get();
+            foreach ($movements as $m) {
+                $product = $m->product;
+                if ($product) {
+                    if ($m->type === 'entry') {
+                        $product->decrement('quantity', $m->quantity);
+                    } else {
+                        $product->increment('quantity', $m->quantity);
+                    }
+                }
+                $m->delete();
+            }
+        });
+
+        return response()->json(['message' => 'Les mouvements sélectionnés ont été annulés et les stocks mis à jour.']);
+    }
+
     private function notifyLowStock(Product $product, User $currentUser): void
     {
         $admins = User::role(['Admin', 'Gestionnaire'])->get();

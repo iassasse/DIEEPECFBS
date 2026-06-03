@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Tag, Pencil, Trash2, Package } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import {
-  Modal, ConfirmDialog, Loader, EmptyState, Badge,
+  Modal, ConfirmDialog, Loader, EmptyState,
   FormField, Input, Textarea, Pagination
 } from '../components/ui';
 
@@ -57,6 +58,40 @@ const Categories = () => {
   const [editing, setEditing]       = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('Admin');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllPage = () => {
+    const pageIds = categories.map(c => c.id);
+    const allSelected = pageIds.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const newSelection = [...prev];
+        pageIds.forEach(id => {
+          if (!newSelection.includes(id)) newSelection.push(id);
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  // Clear selection on page/filter change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, search]);
+
   // Debounce search input to avoid hitting the API on every keystroke
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -69,7 +104,14 @@ const Categories = () => {
     setLoading(true);
     api.get('/categories', { params: { page, per_page: 12, search } })
       .then(({ data }) => {
-        if (data.data) { setCategories(data.data); setMeta(data.meta); }
+        if (data.data) {
+          if (page > 1 && data.data.length === 0) {
+            setPage(prev => Math.max(1, prev - 1));
+          } else {
+            setCategories(data.data);
+            setMeta(data.meta);
+          }
+        }
         else { setCategories(data); setMeta(null); }
       })
       .catch(() => toast.error('Erreur lors du chargement des familles.'))
@@ -111,6 +153,36 @@ const Categories = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/categories', { data: { ids: selectedIds } });
+      toast.success('Familles sélectionnées supprimées.');
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/categories', { data: { all: true } });
+      toast.success('Toutes les familles ont été supprimées.');
+      setSelectedIds([]);
+      setConfirmDeleteAll(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,7 +201,7 @@ const Categories = () => {
 
       {/* Search */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <div className="relative max-w-md">
+        <div className="relative max-w-md h-fit">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <Input className="pl-10" placeholder="Rechercher une famille..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
@@ -156,8 +228,16 @@ const Categories = () => {
               <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-indigo-500" />
               <div className="p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                    <Tag className="w-5 h-5 text-blue-500" />
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(cat.id)}
+                      onChange={() => handleSelectRow(cat.id)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer bg-white"
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <Tag className="w-5 h-5 text-blue-500" />
+                    </div>
                   </div>
                   <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => { setEditing(cat); setModal('edit'); }}
@@ -198,6 +278,59 @@ const Categories = () => {
         onConfirm={handleDelete}
         title="Supprimer la famille"
         message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.name}" ? Cette action ne sera possible que si aucun bien d'inventaire ne lui est associé.`}
+      />
+
+      {/* Sticky selection bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl px-6 py-4 flex items-center justify-between gap-6 z-50 animate-in slide-in-from-top-2 duration-300 w-[calc(100%-2rem)] max-w-2xl">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={categories.length > 0 && categories.every(c => selectedIds.includes(c.id))}
+              onChange={handleSelectAllPage}
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-slate-700">
+              {selectedIds.length} sélectionné(s)
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer border border-red-200"
+            >
+              <Trash2 className="w-4 h-4" /> Supprimer la sélection
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                disabled={bulkActionLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" /> Tout supprimer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={handleBulkDelete}
+        title="Supprimer la sélection"
+        message={`Êtes-vous sûr de vouloir supprimer les ${selectedIds.length} familles sélectionnées ? Cette action n'est possible que si aucun bien d'inventaire ne leur est associé.`}
+      />
+
+      {/* Delete All Confirm */}
+      <ConfirmDialog
+        isOpen={confirmDeleteAll}
+        onCancel={() => setConfirmDeleteAll(false)}
+        onConfirm={handleDeleteAll}
+        title="Tout supprimer"
+        message="Êtes-vous sûr de vouloir supprimer ABSOLUMENT TOUS les familles ? Cette action n'est possible que si aucun bien d'inventaire n'est associé à aucune d'entre elles."
       />
     </div>
   );

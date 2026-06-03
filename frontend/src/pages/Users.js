@@ -88,7 +88,14 @@ const UsersPage = () => {
     if (!isAdmin) return;
     setLoading(true);
     api.get('/users', { params: { page, per_page: 12, search, role: roleFilter } })
-      .then(({ data }) => { setUsers(data.data); setMeta(data.meta); })
+      .then(({ data }) => {
+        if (page > 1 && (!data.data || data.data.length === 0)) {
+          setPage(prev => Math.max(1, prev - 1));
+        } else {
+          setUsers(data.data);
+          setMeta(data.meta);
+        }
+      })
       .catch(() => toast.error('Erreur lors du chargement.'))
       .finally(() => setLoading(false));
   }, [page, search, roleFilter, isAdmin]);
@@ -204,8 +211,8 @@ const UsersPage = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1 max-w-md h-fit">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <Input className="pl-10" placeholder="Rechercher par nom ou email..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>

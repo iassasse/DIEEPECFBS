@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, ArrowUpRight, ArrowDownRight, Trash2, SlidersHorizontal, Download } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import {
   Modal, ConfirmDialog, Loader, EmptyState,
   FormField, Input, Select, Textarea, Pagination
@@ -113,6 +114,40 @@ const Stock = () => {
   const [showModal, setShowModal]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('Admin');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllPage = () => {
+    const pageIds = movements.map(m => m.id);
+    const allSelected = pageIds.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const newSelection = [...prev];
+        pageIds.forEach(id => {
+          if (!newSelection.includes(id)) newSelection.push(id);
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  // Clear selection on page/filter change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, search, typeFilter, dateFrom, dateTo]);
+
   // Debounce search input to avoid hitting the API on every keystroke
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -124,7 +159,14 @@ const Stock = () => {
   const load = useCallback(() => { // eslint-disable-line react-hooks/exhaustive-deps
     setLoading(true);
     api.get('/stock-movements', { params: { page, per_page: 15, search, type: typeFilter, date_from: dateFrom, date_to: dateTo } })
-      .then(({ data }) => { setMovements(data.data); setMeta(data.meta); })
+      .then(({ data }) => {
+        if (page > 1 && (!data.data || data.data.length === 0)) {
+          setPage(prev => Math.max(1, prev - 1));
+        } else {
+          setMovements(data.data);
+          setMeta(data.meta);
+        }
+      })
       .catch(() => toast.error('Erreur lors du chargement.'))
       .finally(() => setLoading(false));
   }, [page, search, typeFilter, dateFrom, dateTo]);
@@ -184,6 +226,36 @@ const Stock = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/stock-movements', { data: { ids: selectedIds } });
+      toast.success('Mouvements de stock sélectionnés supprimés.');
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/stock-movements', { data: { all: true } });
+      toast.success('Tous les mouvements ont été supprimés et stocks réinitialisés.');
+      setSelectedIds([]);
+      setConfirmDeleteAll(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -229,8 +301,8 @@ const Stock = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <div className="relative flex-1 h-fit">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <Input className="pl-10" placeholder="Rechercher par produit ou référence..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
@@ -289,6 +361,14 @@ const Stock = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="px-4 py-3 text-left w-10">
+                    <input
+                      type="checkbox"
+                      checked={movements.length > 0 && movements.every(m => selectedIds.includes(m.id))}
+                      onChange={handleSelectAllPage}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer bg-white"
+                    />
+                  </th>
                   {['Type', 'Désignation', 'Famille', 'Quantité', 'Référence', 'Opérateur', 'Date', ''].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
@@ -297,6 +377,14 @@ const Stock = () => {
               <tbody>
                 {movements.map((m, i) => (
                   <tr key={m.id} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
+                    <td className="px-4 py-3.5 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(m.id)}
+                        onChange={() => handleSelectRow(m.id)}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer bg-white"
+                      />
+                    </td>
                     <td className="px-4 py-3.5">
                       <div className={`flex items-center gap-1.5 font-medium text-sm
                         ${m.type === 'entry' ? 'text-emerald-700' : 'text-red-700'}`}>
@@ -347,6 +435,59 @@ const Stock = () => {
         title="Annuler le mouvement"
         message={`Annuler ce mouvement ? La quantité du produit "${deleteTarget?.product?.name}" sera automatiquement réajustée.`}
         confirmLabel="Annuler le mouvement"
+      />
+
+      {/* Sticky selection bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl px-6 py-4 flex items-center justify-between gap-6 z-50 animate-in slide-in-from-top-2 duration-300 w-[calc(100%-2rem)] max-w-2xl">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={movements.length > 0 && movements.every(m => selectedIds.includes(m.id))}
+              onChange={handleSelectAllPage}
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-slate-700">
+              {selectedIds.length} sélectionné(s)
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer border border-red-200"
+            >
+              <Trash2 className="w-4 h-4" /> Supprimer la sélection
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                disabled={bulkActionLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" /> Tout supprimer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={handleBulkDelete}
+        title="Supprimer la sélection"
+        message={`Êtes-vous sûr de vouloir supprimer les ${selectedIds.length} mouvements sélectionnés ? La quantité des produits associés sera automatiquement réajustée.`}
+      />
+
+      {/* Delete All Confirm */}
+      <ConfirmDialog
+        isOpen={confirmDeleteAll}
+        onCancel={() => setConfirmDeleteAll(false)}
+        onConfirm={handleDeleteAll}
+        title="Tout supprimer"
+        message="Êtes-vous sûr de vouloir supprimer ABSOLUMENT TOUS les mouvements de stock ? Cette action réinitialisera les quantités de tous les produits à 0 et est irréversible."
       />
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Package, Pencil, Trash2, Download, Upload, FileSpreadsheet, X, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import {
   Modal, ConfirmDialog, Loader, EmptyState, Badge,
   FormField, Input, Select, Textarea, Pagination
@@ -371,6 +372,40 @@ const Products = () => {
   const [editing, setEditing]     = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('Admin');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllPage = () => {
+    const pageIds = products.map(p => p.id);
+    const allSelected = pageIds.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const newSelection = [...prev];
+        pageIds.forEach(id => {
+          if (!newSelection.includes(id)) newSelection.push(id);
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  // Clear selection on page/filter change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, search, catFilter, stockFilter]);
+
   // Debounce search input to avoid hitting the API on every keystroke
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -383,7 +418,14 @@ const Products = () => {
     setLoading(true);
     const params = { page, per_page: 12, search, category_id: catFilter, stock_status: stockFilter };
     api.get('/products', { params })
-      .then(({ data }) => { setProducts(data.data); setMeta(data.meta); })
+      .then(({ data }) => {
+        if (page > 1 && (!data.data || data.data.length === 0)) {
+          setPage(prev => Math.max(1, prev - 1));
+        } else {
+          setProducts(data.data);
+          setMeta(data.meta);
+        }
+      })
       .catch(() => toast.error('Erreur lors du chargement des produits.'))
       .finally(() => setLoading(false));
   }, [page, search, catFilter, stockFilter]);
@@ -431,6 +473,36 @@ const Products = () => {
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/products', { data: { ids: selectedIds } });
+      toast.success('Produits sélectionnés supprimés.');
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setBulkActionLoading(true);
+    try {
+      await api.delete('/products', { data: { all: true } });
+      toast.success('Tous les produits ont été supprimés.');
+      setSelectedIds([]);
+      setConfirmDeleteAll(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression.');
+    } finally {
+      setBulkActionLoading(false);
     }
   };
 
@@ -486,8 +558,8 @@ const Products = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1 h-fit">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <Input
               className="pl-10"
@@ -535,8 +607,16 @@ const Products = () => {
               }`} />
               <div className="p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-5 h-5 text-blue-500" />
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={() => handleSelectRow(p.id)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer bg-white"
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-blue-500" />
+                    </div>
                   </div>
                   <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -605,6 +685,59 @@ const Products = () => {
         onConfirm={handleDelete}
         title="Supprimer le bien d'inventaire"
         message={`Êtes-vous sûr de vouloir supprimer "${deleteTarget?.designation}" ? Cette action est irréversible et supprimera également l'historique des mouvements associés.`}
+      />
+
+      {/* Sticky selection bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl px-6 py-4 flex items-center justify-between gap-6 z-50 animate-in slide-in-from-top-2 duration-300 w-[calc(100%-2rem)] max-w-2xl">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={products.length > 0 && products.every(p => selectedIds.includes(p.id))}
+              onChange={handleSelectAllPage}
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-slate-700">
+              {selectedIds.length} sélectionné(s)
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer border border-red-200"
+            >
+              <Trash2 className="w-4 h-4" /> Supprimer la sélection
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                disabled={bulkActionLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" /> Tout supprimer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={handleBulkDelete}
+        title="Supprimer la sélection"
+        message={`Êtes-vous sûr de vouloir supprimer les ${selectedIds.length} biens d'inventaire sélectionnés ? Cette action est irréversible et supprimera également leur historique des mouvements.`}
+      />
+
+      {/* Delete All Confirm */}
+      <ConfirmDialog
+        isOpen={confirmDeleteAll}
+        onCancel={() => setConfirmDeleteAll(false)}
+        onConfirm={handleDeleteAll}
+        title="Tout supprimer"
+        message="Êtes-vous sûr de vouloir supprimer ABSOLUMENT TOUS les biens d'inventaire ? Cette action est irréversible, supprimera toutes les données et leur historique de mouvements."
       />
     </div>
   );

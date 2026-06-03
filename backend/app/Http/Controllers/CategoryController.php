@@ -99,4 +99,36 @@ class CategoryController extends Controller
         $category->delete();
         return response()->json(['message' => 'Catégorie supprimée avec succès.']);
     }
+
+    public function destroyBulk(Request $request)
+    {
+        if ($request->boolean('all')) {
+            if (!$request->user()->hasRole('Admin')) {
+                return response()->json(['message' => 'Accès non autorisé. Seuls les administrateurs peuvent tout supprimer.'], 403);
+            }
+            if (\App\Models\Product::exists()) {
+                return response()->json([
+                    'message' => 'Impossible de tout supprimer car certaines familles contiennent des produits. Veuillez d\'abord supprimer les produits.'
+                ], 422);
+            }
+            Category::query()->delete();
+            return response()->json(['message' => 'Toutes les familles ont été supprimées avec succès.']);
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:categories,id'
+        ]);
+
+        $hasProducts = \App\Models\Product::whereIn('category_id', $validated['ids'])->exists();
+        if ($hasProducts) {
+            return response()->json([
+                'message' => 'Impossible de supprimer ces familles car certaines contiennent des produits.'
+            ], 422);
+        }
+
+        Category::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json(['message' => 'Les familles sélectionnées ont été supprimées avec succès.']);
+    }
 }

@@ -25,15 +25,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Categories
+    Route::delete('/categories', [CategoryController::class, 'destroyBulk']);
     Route::apiResource('categories', CategoryController::class);
 
     // Products Export & Import (Must be before resource)
     Route::get('/products/export', [ProductController::class, 'export']);
     Route::post('/products/import', [ProductController::class, 'import']);
+    Route::delete('/products', [ProductController::class, 'destroyBulk']);
     Route::apiResource('products', ProductController::class);
 
     // Stock movements Export & Resource
     Route::get('/stock-movements/export', [StockMovementController::class, 'export']);
+    Route::delete('/stock-movements', [StockMovementController::class, 'destroyBulk']);
     Route::apiResource('stock-movements', StockMovementController::class)->except(['update']);
 
     // Users Export & Resource (Admin only)

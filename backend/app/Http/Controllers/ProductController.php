@@ -151,6 +151,26 @@ class ProductController extends Controller
         return response()->json(['message' => 'Produit supprimé avec succès.']);
     }
 
+    public function destroyBulk(Request $request)
+    {
+        if ($request->boolean('all')) {
+            if (!$request->user()->hasRole('Admin')) {
+                return response()->json(['message' => 'Accès non autorisé. Seuls les administrateurs peuvent tout supprimer.'], 403);
+            }
+            Product::query()->delete();
+            return response()->json(['message' => 'Tous les produits ont été supprimés avec succès.']);
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:products,id'
+        ]);
+
+        Product::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json(['message' => 'Les produits sélectionnés ont été supprimés avec succès.']);
+    }
+
     private function notifyLowStock(Product $product): void
     {
         $admins = User::role(['Admin', 'Gestionnaire'])->get();
