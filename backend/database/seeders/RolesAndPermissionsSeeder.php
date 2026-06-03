@@ -51,6 +51,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Utilisateur gets view-only
         $roleUtilisateur->syncPermissions([
             'view products', 'view categories', 'view stock', 'view dashboard',
+            'view reports',
             'view notifications',
         ]);
 
